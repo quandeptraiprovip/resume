@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 const MD = {
   ink: '#fff',
   inkSoft: 'rgba(255,255,255,0.78)',
@@ -198,66 +200,78 @@ const MD_ACHIEVEMENTS = [
 ];
 
 export default function Home() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  if (!mounted) return null;
+
+  const padding = isMobile ? 14 : 32;
+  const gap = isMobile ? 10 : 14;
+  const skillsCols = isMobile ? 2 : 4;
+  const heading1Size = isMobile ? 28 : 44;
+  const heading2Size = isMobile ? 20 : 26;
+  const heading3Size = isMobile ? 18 : 22;
+
   return (
     <MDEnv>
       <div
         style={{
-          padding: '24px 32px 40px',
+          padding: `${padding}px`,
           position: 'relative',
           zIndex: 1,
           display: 'flex',
           flexDirection: 'column',
-          gap: 14,
+          gap: gap,
           maxWidth: 1180,
           margin: '0 auto',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* nav bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: isMobile ? 8 : 0 }}>
           <MDGlass
             padded={false}
             style={{
               borderRadius: 999,
-              padding: '8px 18px',
+              padding: isMobile ? '6px 12px' : '8px 18px',
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 8,
             }}
           >
             <div
               style={{
-                width: 8,
-                height: 8,
+                width: 6,
+                height: 6,
                 borderRadius: '50%',
                 background: MD.green,
                 boxShadow: `0 0 10px ${MD.green}`,
               }}
             />
-            <span style={{ fontFamily: MD.serif, fontSize: 17, letterSpacing: '-0.01em' }}>
+            <span style={{ fontFamily: MD.serif, fontSize: isMobile ? 13 : 17, letterSpacing: '-0.01em' }}>
               Your Name
-            </span>
-            <span
-              style={{
-                fontFamily: MD.mono,
-                fontSize: 10,
-                letterSpacing: '.16em',
-                color: MD.mute,
-                marginLeft: 6,
-              }}
-            >
-              OPEN · MAY '26
             </span>
           </MDGlass>
           <MDGlass
             padded={false}
-            style={{ borderRadius: 999, padding: 6, display: 'flex', gap: 2 }}
+            style={{ borderRadius: 999, padding: isMobile ? 4 : 6, display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}
           >
             {MD_NAV.map((t, i) => (
               <span
                 key={t}
                 style={{
-                  padding: '7px 14px',
+                  padding: isMobile ? '5px 8px' : '7px 14px',
                   borderRadius: 999,
-                  fontSize: 12,
+                  fontSize: isMobile ? 9 : 12,
                   color: MD.ink,
                   background: i === 0 ? 'rgba(255,255,255,0.18)' : 'transparent',
                   fontWeight: i === 0 ? 500 : 400,
@@ -269,11 +283,12 @@ export default function Home() {
           </MDGlass>
         </div>
 
-        <MDGlass style={{ padding: '22px 26px', display: 'flex', alignItems: 'center', gap: 22, marginTop: 80 }}>
+        {/* identity capsule */}
+        <MDGlass style={{ padding: isMobile ? '16px 16px' : '22px 26px', display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 22, marginTop: isMobile ? 40 : 80, flexDirection: isMobile ? 'column' : 'row', textAlign: isMobile ? 'center' : 'left' }}>
           <div
             style={{
-              width: 72,
-              height: 72,
+              width: isMobile ? 62 : 72,
+              height: isMobile ? 62 : 72,
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #5b8cff, #ff9ec7)',
               flexShrink: 0,
@@ -283,19 +298,19 @@ export default function Home() {
               alignItems: 'center',
               justifyContent: 'center',
               fontFamily: MD.serif,
-              fontSize: 30,
+              fontSize: isMobile ? 24 : 30,
               color: '#fff',
             }}
           >
             yn
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: isMobile ? 10 : 14, flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
               <h1
                 style={{
                   fontFamily: MD.serif,
                   fontWeight: 400,
-                  fontSize: 44,
+                  fontSize: heading1Size,
                   lineHeight: 1,
                   letterSpacing: '-0.02em',
                   margin: 0,
@@ -303,11 +318,11 @@ export default function Home() {
               >
                 Your Name
               </h1>
-              <span style={{ fontSize: 14, color: MD.inkSoft }}>— Junior Software Engineer</span>
+              <span style={{ fontSize: isMobile ? 12 : 14, color: MD.inkSoft }}>— Junior Software Engineer</span>
             </div>
             <p
               style={{
-                fontSize: 14,
+                fontSize: isMobile ? 12 : 14,
                 color: MD.inkSoft,
                 margin: '6px 0 0',
                 lineHeight: 1.5,
@@ -318,37 +333,70 @@ export default function Home() {
               Looking for a team that ships often and reads code together.
             </p>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-            <span
-              style={{
-                background: '#fff',
-                color: '#1a1a2e',
-                padding: '10px 18px',
-                borderRadius: 999,
-                fontSize: 13,
-                fontWeight: 500,
-                textAlign: 'center',
-              }}
-            >
-              ↓ Résumé.pdf
-            </span>
-            <span
-              style={{
-                background: 'rgba(255,255,255,0.08)',
-                padding: '10px 18px',
-                borderRadius: 999,
-                fontSize: 13,
-                color: MD.ink,
-                border: '1px solid rgba(255,255,255,0.2)',
-                textAlign: 'center',
-              }}
-            >
-              ✉ hello@yourname.dev
-            </span>
-          </div>
+          {!isMobile && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+              <span
+                style={{
+                  background: '#fff',
+                  color: '#1a1a2e',
+                  padding: '10px 18px',
+                  borderRadius: 999,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  textAlign: 'center',
+                }}
+              >
+                ↓ Résumé.pdf
+              </span>
+              <span
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  padding: '10px 18px',
+                  borderRadius: 999,
+                  fontSize: 13,
+                  color: MD.ink,
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  textAlign: 'center',
+                }}
+              >
+                ✉ hello@yourname.dev
+              </span>
+            </div>
+          )}
+          {isMobile && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+              <span
+                style={{
+                  background: '#fff',
+                  color: '#1a1a2e',
+                  padding: '10px 14px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  textAlign: 'center',
+                }}
+              >
+                ↓ Résumé.pdf
+              </span>
+              <span
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  padding: '10px 14px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  color: MD.ink,
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  textAlign: 'center',
+                }}
+              >
+                ✉ hello@yourname.dev
+              </span>
+            </div>
+          )}
         </MDGlass>
 
-        <MDGlass style={{ padding: '22px 26px' }}>
+        {/* SKILLS */}
+        <MDGlass style={{ padding: isMobile ? '16px' : '22px 26px' }}>
           <div
             style={{
               display: 'flex',
@@ -356,34 +404,38 @@ export default function Home() {
               alignItems: 'baseline',
               paddingBottom: 14,
               borderBottom: `1px solid ${MD.hairline}`,
+              flexWrap: 'wrap',
+              gap: 10,
             }}
           >
-            <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontFamily: MD.mono,
-                  fontSize: 11,
+                  fontSize: isMobile ? 9 : 11,
                   letterSpacing: '.18em',
                   color: MD.mute,
                 }}
               >
                 § 01
               </span>
-              <span style={{ fontFamily: MD.serif, fontSize: 26, letterSpacing: '-0.01em' }}>
+              <span style={{ fontFamily: MD.serif, fontSize: heading2Size, letterSpacing: '-0.01em' }}>
                 Skills &amp; stack
               </span>
             </div>
-            <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute }}>
-              4 categories · 20+ tools
-            </span>
+            {!isMobile && (
+              <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute }}>
+                4 categories · 20+ tools
+              </span>
+            )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20, paddingTop: 18 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${skillsCols},1fr)`, gap: isMobile ? 14 : 20, paddingTop: 14 }}>
             {MD_SKILLS.map((s) => (
-              <div key={s.group} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div key={s.group} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div
                   style={{
                     fontFamily: MD.serif,
-                    fontSize: 22,
+                    fontSize: isMobile ? 16 : 22,
                     color: MD.ink,
                     lineHeight: 1,
                     fontStyle: 'italic',
@@ -391,7 +443,7 @@ export default function Home() {
                 >
                   {s.group}
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                   {s.items.map((t) => (
                     <span
                       key={t}
@@ -399,9 +451,9 @@ export default function Home() {
                         background: MD.chipBg,
                         backdropFilter: 'blur(6px)',
                         border: MD.chipBd,
-                        padding: '4px 10px',
+                        padding: isMobile ? '3px 8px' : '4px 10px',
                         borderRadius: 999,
-                        fontSize: 11,
+                        fontSize: isMobile ? 10 : 11,
                         color: MD.ink,
                         fontFamily: MD.mono,
                       }}
@@ -415,7 +467,8 @@ export default function Home() {
           </div>
         </MDGlass>
 
-        <MDGlass style={{ padding: '22px 26px' }}>
+        {/* PROJECTS */}
+        <MDGlass style={{ padding: isMobile ? '16px' : '22px 26px' }}>
           <div
             style={{
               display: 'flex',
@@ -423,47 +476,54 @@ export default function Home() {
               alignItems: 'baseline',
               paddingBottom: 14,
               borderBottom: `1px solid ${MD.hairline}`,
+              flexWrap: 'wrap',
+              gap: 10,
             }}
           >
-            <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
               <span
                 style={{
                   fontFamily: MD.mono,
-                  fontSize: 11,
+                  fontSize: isMobile ? 9 : 11,
                   letterSpacing: '.18em',
                   color: MD.mute,
                 }}
               >
                 § 02
               </span>
-              <span style={{ fontFamily: MD.serif, fontSize: 26, letterSpacing: '-0.01em' }}>
+              <span style={{ fontFamily: MD.serif, fontSize: heading2Size, letterSpacing: '-0.01em' }}>
                 Selected work
               </span>
             </div>
-            <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute }}>
-              05 projects · 2024 — 2026
-            </span>
+            {!isMobile && (
+              <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute }}>
+                05 projects · 2024 — 2026
+              </span>
+            )}
           </div>
           {MD_PROJECTS.map((p, i) => (
             <div
               key={p.n}
               style={{
-                display: 'grid',
-                gridTemplateColumns: '88px 1fr 240px 32px',
-                gap: 20,
-                padding: '18px 0',
+                display: isMobile ? 'flex' : 'grid',
+                flexDirection: isMobile ? 'column' : 'row',
+                gridTemplateColumns: isMobile ? undefined : '88px 1fr 240px 32px',
+                gap: isMobile ? 12 : 20,
+                padding: isMobile ? '12px 0' : '18px 0',
                 borderBottom: i < MD_PROJECTS.length - 1 ? `1px solid ${MD.hairline}` : 'none',
-                alignItems: 'center',
+                alignItems: isMobile ? 'stretch' : 'center',
               }}
             >
               <div
                 style={{
-                  height: 72,
+                  height: isMobile ? 100 : 72,
                   borderRadius: 12,
                   background: p.grad,
                   position: 'relative',
                   overflow: 'hidden',
                   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4)',
+                  flexShrink: 0,
+                  minWidth: isMobile ? undefined : 88,
                 }}
               >
                 <div
@@ -472,7 +532,7 @@ export default function Home() {
                     right: 8,
                     bottom: 4,
                     fontFamily: MD.serif,
-                    fontSize: 30,
+                    fontSize: isMobile ? 32 : 30,
                     color: '#fff',
                     opacity: 0.9,
                     lineHeight: 1,
@@ -480,38 +540,50 @@ export default function Home() {
                 >
                   {p.n}
                 </div>
+                {isMobile && (
+                  <div style={{ position: 'absolute', left: 8, top: 8, fontFamily: MD.mono, fontSize: 10, letterSpacing: '.18em', color: '#fff' }}>
+                    {p.y}
+                  </div>
+                )}
               </div>
               <div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
-                  <span
-                    style={{
-                      fontFamily: MD.mono,
-                      fontSize: 10,
-                      letterSpacing: '.16em',
-                      textTransform: 'uppercase',
-                      color: MD.warm,
-                    }}
-                  >
-                    {p.y}
+                {!isMobile && (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'baseline', marginBottom: 6 }}>
+                    <span
+                      style={{
+                        fontFamily: MD.mono,
+                        fontSize: 10,
+                        letterSpacing: '.16em',
+                        textTransform: 'uppercase',
+                        color: MD.warm,
+                      }}
+                    >
+                      {p.y}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MD.mono,
+                        fontSize: 10,
+                        letterSpacing: '.16em',
+                        textTransform: 'uppercase',
+                        color: MD.mute,
+                      }}
+                    >
+                      · {p.kind}
+                    </span>
+                  </div>
+                )}
+                {isMobile && (
+                  <span style={{ fontFamily: MD.mono, fontSize: 9, color: MD.warm, display: 'block', marginBottom: 4 }}>
+                    {p.kind}
                   </span>
-                  <span
-                    style={{
-                      fontFamily: MD.mono,
-                      fontSize: 10,
-                      letterSpacing: '.16em',
-                      textTransform: 'uppercase',
-                      color: MD.mute,
-                    }}
-                  >
-                    · {p.kind}
-                  </span>
-                </div>
-                <div style={{ fontFamily: MD.serif, fontSize: 24, color: MD.ink, lineHeight: 1.1, marginTop: 3 }}>
+                )}
+                <div style={{ fontFamily: MD.serif, fontSize: isMobile ? 18 : 24, color: MD.ink, lineHeight: 1.1 }}>
                   {p.t}
                 </div>
                 <div
                   style={{
-                    fontSize: 13,
+                    fontSize: isMobile ? 12 : 13,
                     color: MD.inkSoft,
                     marginTop: 4,
                     lineHeight: 1.45,
@@ -521,16 +593,16 @@ export default function Home() {
                   {p.desc}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignSelf: 'center' }}>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'center' }}>
                 {p.stack.map((t) => (
                   <span
                     key={t}
                     style={{
                       background: MD.chipBg,
                       border: MD.chipBd,
-                      padding: '3px 9px',
+                      padding: isMobile ? '3px 8px' : '3px 9px',
                       borderRadius: 999,
-                      fontSize: 11,
+                      fontSize: isMobile ? 9 : 11,
                       color: MD.ink,
                       fontFamily: MD.mono,
                     }}
@@ -539,29 +611,14 @@ export default function Home() {
                   </span>
                 ))}
               </div>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.1)',
-                  border: MD.chipBd,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 15,
-                  color: MD.ink,
-                  marginLeft: 'auto',
-                }}
-              >
-                ↗
-              </div>
             </div>
           ))}
         </MDGlass>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 14 }}>
-          <MDGlass style={{ padding: '22px 26px' }}>
+        {/* EDUCATION + ACHIEVEMENTS */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.1fr 1fr', gap: 14 }}>
+          {/* EDUCATION */}
+          <MDGlass style={{ padding: isMobile ? '16px' : '22px 26px' }}>
             <div
               style={{
                 display: 'flex',
@@ -569,20 +626,22 @@ export default function Home() {
                 alignItems: 'baseline',
                 paddingBottom: 14,
                 borderBottom: `1px solid ${MD.hairline}`,
+                flexWrap: 'wrap',
+                gap: 10,
               }}
             >
-              <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
                 <span
                   style={{
                     fontFamily: MD.mono,
-                    fontSize: 11,
+                    fontSize: isMobile ? 9 : 11,
                     letterSpacing: '.18em',
                     color: MD.mute,
                   }}
                 >
                   § 03
                 </span>
-                <span style={{ fontFamily: MD.serif, fontSize: 26, letterSpacing: '-0.01em' }}>
+                <span style={{ fontFamily: MD.serif, fontSize: heading2Size, letterSpacing: '-0.01em' }}>
                   Education
                 </span>
               </div>
@@ -591,7 +650,7 @@ export default function Home() {
               <div
                 key={i}
                 style={{
-                  padding: '16px 0',
+                  padding: isMobile ? '12px 0' : '16px 0',
                   borderBottom: i < MD_EDUCATION.length - 1 ? `1px solid ${MD.hairline}` : 'none',
                 }}
               >
@@ -600,13 +659,14 @@ export default function Home() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'baseline',
-                    gap: 14,
+                    gap: 10,
+                    flexWrap: 'wrap',
                   }}
                 >
                   <span
                     style={{
                       fontFamily: MD.mono,
-                      fontSize: 10,
+                      fontSize: isMobile ? 9 : 10,
                       letterSpacing: '.16em',
                       textTransform: 'uppercase',
                       color: MD.cool,
@@ -614,31 +674,33 @@ export default function Home() {
                   >
                     {e.period}
                   </span>
-                  <span style={{ fontFamily: MD.mono, fontSize: 10, color: MD.mute }}>
-                    {e.grade}
-                  </span>
+                  {!isMobile && (
+                    <span style={{ fontFamily: MD.mono, fontSize: 10, color: MD.mute }}>
+                      {e.grade}
+                    </span>
+                  )}
                 </div>
-                <div style={{ fontFamily: MD.serif, fontSize: 22, marginTop: 4, lineHeight: 1.2 }}>
+                <div style={{ fontFamily: MD.serif, fontSize: heading3Size, marginTop: 4, lineHeight: 1.2 }}>
                   {e.degree}
                 </div>
-                <div style={{ fontSize: 12, color: MD.inkSoft, marginTop: 2, fontStyle: 'italic' }}>
+                <div style={{ fontSize: isMobile ? 11 : 12, color: MD.inkSoft, marginTop: 2, fontStyle: 'italic' }}>
                   {e.school}
                 </div>
                 <ul
                   style={{
-                    margin: '10px 0 0',
+                    margin: '8px 0 0',
                     padding: 0,
                     listStyle: 'none',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 5,
+                    gap: 4,
                   }}
                 >
                   {e.notes.map((n) => (
                     <li
                       key={n}
                       style={{
-                        fontSize: 12,
+                        fontSize: isMobile ? 11 : 12,
                         color: MD.inkSoft,
                         paddingLeft: 14,
                         position: 'relative',
@@ -649,7 +711,7 @@ export default function Home() {
                         style={{
                           position: 'absolute',
                           left: 0,
-                          top: 8,
+                          top: 6,
                           width: 4,
                           height: 4,
                           borderRadius: '50%',
@@ -664,7 +726,8 @@ export default function Home() {
             ))}
           </MDGlass>
 
-          <MDGlass style={{ padding: '22px 26px' }}>
+          {/* ACHIEVEMENTS */}
+          <MDGlass style={{ padding: isMobile ? '16px' : '22px 26px' }}>
             <div
               style={{
                 display: 'flex',
@@ -672,60 +735,64 @@ export default function Home() {
                 alignItems: 'baseline',
                 paddingBottom: 14,
                 borderBottom: `1px solid ${MD.hairline}`,
+                flexWrap: 'wrap',
+                gap: 10,
               }}
             >
-              <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
                 <span
                   style={{
                     fontFamily: MD.mono,
-                    fontSize: 11,
+                    fontSize: isMobile ? 9 : 11,
                     letterSpacing: '.18em',
                     color: MD.mute,
                   }}
                 >
                   § 04
                 </span>
-                <span style={{ fontFamily: MD.serif, fontSize: 26, letterSpacing: '-0.01em' }}>
+                <span style={{ fontFamily: MD.serif, fontSize: heading2Size, letterSpacing: '-0.01em' }}>
                   Achievements
                 </span>
               </div>
-              <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute }}>06 highlights</span>
+              {!isMobile && <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute }}>06 highlights</span>}
             </div>
             {MD_ACHIEVEMENTS.map((a, i) => (
               <div
                 key={i}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '72px 1fr 48px',
-                  gap: 12,
-                  padding: '14px 0',
+                  display: isMobile ? 'flex' : 'grid',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gridTemplateColumns: isMobile ? undefined : '72px 1fr 48px',
+                  gap: isMobile ? 8 : 12,
+                  padding: isMobile ? '10px 0' : '14px 0',
                   borderBottom: i < MD_ACHIEVEMENTS.length - 1 ? `1px solid ${MD.hairline}` : 'none',
-                  alignItems: 'center',
+                  alignItems: 'stretch',
                 }}
               >
                 <span
                   style={{
                     background: MD.chipBg,
                     border: MD.chipBd,
-                    padding: '3px 0',
+                    padding: '3px 6px',
                     borderRadius: 6,
-                    fontSize: 10,
+                    fontSize: isMobile ? 8 : 10,
                     color: MD.cool,
                     fontFamily: MD.mono,
                     letterSpacing: '.1em',
                     textAlign: 'center',
                     textTransform: 'uppercase',
+                    minWidth: isMobile ? 'auto' : 72,
                   }}
                 >
                   {a.kind}
                 </span>
                 <div>
-                  <div style={{ fontFamily: MD.serif, fontSize: 18, lineHeight: 1.2 }}>
+                  <div style={{ fontFamily: MD.serif, fontSize: isMobile ? 16 : 18, lineHeight: 1.2 }}>
                     {a.title}
                   </div>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: isMobile ? 10 : 11,
                       color: MD.mute,
                       marginTop: 2,
                       fontFamily: MD.mono,
@@ -735,23 +802,23 @@ export default function Home() {
                     {a.org}
                   </div>
                 </div>
-                <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute, textAlign: 'right' }}>
-                  {a.year}
-                </span>
+                {!isMobile && <span style={{ fontFamily: MD.mono, fontSize: 11, color: MD.mute, textAlign: 'right' }}>{a.year}</span>}
+                {isMobile && <span style={{ fontFamily: MD.mono, fontSize: 10, color: MD.mute }}>{a.year}</span>}
               </div>
             ))}
           </MDGlass>
         </div>
 
-        <MDGlass style={{ padding: '30px 32px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24, alignItems: 'center' }}>
+        {/* CONTACT */}
+        <MDGlass style={{ padding: isMobile ? '20px 16px' : '30px 32px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: isMobile ? 16 : 24, alignItems: isMobile ? 'stretch' : 'center' }}>
           <div>
-            <span style={{ fontFamily: MD.mono, fontSize: 11, letterSpacing: '.18em', color: MD.mute }}>
+            <span style={{ fontFamily: MD.mono, fontSize: isMobile ? 9 : 11, letterSpacing: '.18em', color: MD.mute }}>
               § 05 — Reach
             </span>
             <div
               style={{
                 fontFamily: MD.serif,
-                fontSize: 56,
+                fontSize: isMobile ? 36 : 56,
                 lineHeight: 0.95,
                 marginTop: 8,
                 letterSpacing: '-0.02em',
@@ -759,11 +826,11 @@ export default function Home() {
             >
               Let's <span style={{ fontStyle: 'italic', color: MD.warm }}>talk</span>.
             </div>
-            <div style={{ fontFamily: MD.serif, fontSize: 24, color: MD.inkSoft, marginTop: 6 }}>
+            <div style={{ fontFamily: MD.serif, fontSize: isMobile ? 16 : 24, color: MD.inkSoft, marginTop: 6 }}>
               hello@yourname.dev
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {[
               ['GitHub', 'github.com/yourname'],
               ['LinkedIn', 'linkedin.com/in/yourname'],
@@ -775,7 +842,7 @@ export default function Home() {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  padding: '10px 14px',
+                  padding: isMobile ? '8px 12px' : '10px 14px',
                   borderRadius: 10,
                   background: 'rgba(255,255,255,0.06)',
                   border: MD.chipBd,
@@ -784,7 +851,7 @@ export default function Home() {
                 <span
                   style={{
                     fontFamily: MD.mono,
-                    fontSize: 10,
+                    fontSize: isMobile ? 9 : 10,
                     letterSpacing: '.16em',
                     color: MD.mute,
                     textTransform: 'uppercase',
@@ -792,26 +859,29 @@ export default function Home() {
                 >
                   {k}
                 </span>
-                <span style={{ fontSize: 13, color: MD.ink }}>{v} ↗</span>
+                <span style={{ fontSize: isMobile ? 11 : 13, color: MD.ink }}>{isMobile ? v.split('/').pop() : v} ↗</span>
               </div>
             ))}
           </div>
         </MDGlass>
 
+        {/* footer */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            padding: '18px 8px 0',
+            padding: '12px 8px 0',
             fontFamily: MD.mono,
-            fontSize: 10,
+            fontSize: isMobile ? 8 : 10,
             letterSpacing: '.16em',
             color: MD.muteSoft,
             textTransform: 'uppercase',
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
+            gap: isMobile ? 8 : 0,
           }}
         >
           <span>Your Name · 2026 · Hà Nội</span>
-          <span>Set in Instrument Serif &amp; Geist</span>
+          {!isMobile && <span>Set in Instrument Serif &amp; Geist</span>}
         </div>
       </div>
     </MDEnv>
