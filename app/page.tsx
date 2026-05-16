@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const MD = {
   ink: '#fff',
@@ -39,13 +39,32 @@ function MDGlass({ children, style, padded = true }: any) {
   );
 }
 
-function MDEnv({ children, style }: any) {
+function MDEnv({ children, style, scrollY, isMobile }: any) {
+  const scrollProgress = Math.min(scrollY / 800, 1);
+
   const bg = `
-    radial-gradient(800px 500px at 20% 80%, rgba(255,180,120,0.45) 0%, transparent 60%),
-    radial-gradient(900px 600px at 90% 20%, rgba(180,200,255,0.35) 0%, transparent 55%),
+    radial-gradient(800px 500px at ${20 + scrollProgress * 5}% ${80 - scrollProgress * 15}%, rgba(${255 - scrollProgress * 50},${180 - scrollProgress * 80},${120 - scrollProgress * 70},${0.45 - scrollProgress * 0.15}) 0%, transparent 60%),
+    radial-gradient(900px 600px at ${90 - scrollProgress * 10}% ${20 + scrollProgress * 10}%, rgba(${180 + scrollProgress * 40},${200 - scrollProgress * 80},${255 - scrollProgress * 100},${0.35 - scrollProgress * 0.15}) 0%, transparent 55%),
     radial-gradient(600px 400px at 70% 70%, rgba(255,140,140,0.25) 0%, transparent 55%),
     linear-gradient(180deg, #1d2a4c 0%, #3a4a7c 30%, #6a5a7c 55%, #8a6a5c 75%, #c89a7a 100%)
   `;
+
+  const isMobileDevice = isMobile || typeof window !== 'undefined' && window.innerWidth < 768;
+
+  const sunMultiplier = isMobileDevice ? 0.4 : 0.3;
+  const parallaxMultiplier = isMobileDevice ? 1.2 : 1;
+
+  const sunY = Math.min(scrollY * sunMultiplier, isMobileDevice ? 150 : 120);
+  const sunOpacity = Math.max(0.5, 1 - scrollY * 0.0008);
+  const glowOpacity = Math.max(0.35, 0.85 - scrollY * 0.0006);
+
+  const sunSize = isMobileDevice ? 140 : 180;
+  const sunInnerSize = isMobileDevice ? 90 : 120;
+
+  const mountain1Translate = scrollY * 0.25 * parallaxMultiplier;
+  const mountain2Translate = scrollY * 0.35 * parallaxMultiplier;
+  const mountain3Translate = scrollY * 0.45 * parallaxMultiplier;
+
   return (
     <div
       style={{
@@ -59,45 +78,300 @@ function MDEnv({ children, style }: any) {
         ...style,
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          right: '12%',
-          top: '6%',
-          width: 160,
-          height: 160,
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle, rgba(255,220,160,0.85), rgba(255,180,120,0) 70%)',
-          filter: 'blur(6px)',
-          pointerEvents: 'none',
-        }}
-      />
-      <svg
-        viewBox="0 0 1180 780"
-        preserveAspectRatio="none"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          opacity: 0.42,
-          pointerEvents: 'none',
-        }}
-      >
-        <path
-          d="M0,460 L120,320 L240,420 L380,260 L520,380 L660,240 L800,360 L940,280 L1080,360 L1180,300 L1180,780 L0,780 Z"
-          fill="rgba(10,16,32,0.55)"
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {/* Floating Fire-like Light Sparks - MOBILE ENHANCED */}
+        {[...Array(isMobileDevice ? 18 : 12)].map((_, i) => {
+          const baseSize = isMobileDevice ? 12 : 8;
+          const orbSize = baseSize + Math.sin(scrollY / 80 + i) * 3;
+
+          // Scroll-based flickering - stronger on mobile
+          const flickerIntensity = 0.4 + Math.sin(scrollY / 80 + i * 0.7) * 0.4;
+          const scrollReactOpacity = isMobileDevice
+            ? 0.85 + (scrollProgress * 0.15) + flickerIntensity
+            : 0.7 + (scrollProgress * 0.25) + flickerIntensity;
+
+          // Scroll affects vertical position - more visible on mobile
+          const scrollYOffset = scrollY * (isMobileDevice ? 0.08 : 0.1 + i * 0.02);
+
+          let r, g, b;
+          if (i % 4 === 0) {
+            // Warm orange/yellow fire
+            r = 255;
+            g = Math.floor(140 + scrollProgress * 80 + flickerIntensity * 80);
+            b = Math.floor(50 + scrollProgress * 60);
+          } else if (i % 4 === 1) {
+            // Hot red/pink
+            r = 255;
+            g = Math.floor(100 + scrollProgress * 60 + flickerIntensity * 60);
+            b = Math.floor(80 + scrollProgress * 100);
+          } else if (i % 4 === 2) {
+            // Cool blue/cyan sparks
+            r = Math.floor(150 + scrollProgress * 50);
+            g = Math.floor(200 + scrollProgress * 40 + flickerIntensity * 50);
+            b = 255;
+          } else {
+            // Bright white core
+            r = Math.floor(255 - scrollProgress * 20);
+            g = Math.floor(255 - scrollProgress * 20 + flickerIntensity * 80);
+            b = Math.floor(240 - scrollProgress * 20 + flickerIntensity * 70);
+          }
+
+          const animDuration = isMobileDevice ? 3 + (i % 3) * 0.8 : 4 + (i % 3) * 1.5;
+          const delay = i * (isMobileDevice ? 0.08 : 0.15);
+          const topPosition = isMobileDevice ? 140 + (i % 9) * 45 : 120 + i * 60;
+
+          return (
+            <div
+              key={`spark-${i}`}
+              style={{
+                position: 'absolute',
+                left: `${3 + (i % (isMobileDevice ? 9 : 6)) * (isMobileDevice ? 11 : 15)}%`,
+                top: `${topPosition + scrollYOffset + Math.sin(scrollY / 180 + i) * 40}px`,
+                width: orbSize,
+                height: orbSize,
+                borderRadius: '50%',
+                background: `radial-gradient(circle, rgba(${r},${g},${b},${scrollReactOpacity}), rgba(${r},${g},${b},${scrollReactOpacity * 0.4}), transparent)`,
+                filter: `blur(${isMobileDevice ? 9 : 8}px) brightness(${1.5 + flickerIntensity * 0.5})`,
+                boxShadow: `0 0 ${(orbSize * 5 + flickerIntensity * 20)}px rgba(${r},${g},${b},${scrollReactOpacity * 1}),
+                           0 0 ${(orbSize * 9 + flickerIntensity * 30)}px rgba(${r},${g},${b},${scrollReactOpacity * 0.7}),
+                           0 0 ${(orbSize * 14 + flickerIntensity * 40)}px rgba(${r},${g},${b},${scrollReactOpacity * 0.4})`,
+                opacity: Math.max(isMobileDevice ? 0.8 : 0.6, scrollReactOpacity),
+                pointerEvents: 'none',
+                animation: `spark-float-${i % 3} ${animDuration}s ease-in-out infinite`,
+                animationDelay: `${delay}s`,
+              }}
+            />
+          );
+        })}
+
+        {/* Fire Trail Particles - MOBILE ENHANCED */}
+        {[...Array(isMobileDevice ? 12 : 8)].map((_, i) => {
+          const fireFlicker = Math.sin(scrollY / 100 + i * 0.5) * 0.45;
+          const scrollYOffset = scrollY * (isMobileDevice ? 0.07 : 0.08 + i * 0.015);
+          const trailOpacity = isMobileDevice
+            ? 0.75 + fireFlicker + scrollProgress * 0.2
+            : 0.6 + fireFlicker + scrollProgress * 0.2;
+          const trailSize = isMobileDevice ? 9 : 7;
+
+          const trailR = Math.floor(255);
+          const trailG = Math.floor(120 + scrollProgress * 100 + fireFlicker * 80);
+          const trailB = Math.floor(40 + scrollProgress * 80);
+
+          const trailTop = isMobileDevice ? 240 + (i % 6) * 50 : 200 + i * 40;
+
+          return (
+            <div
+              key={`trail-${i}`}
+              style={{
+                position: 'absolute',
+                left: `${5 + (i % (isMobileDevice ? 6 : 4)) * (isMobileDevice ? 16 : 14)}%`,
+                top: `${trailTop + scrollYOffset + Math.sin(scrollY / 200 + i) * 50}px`,
+                width: trailSize,
+                height: trailSize,
+                borderRadius: '50%',
+                background: `radial-gradient(circle, rgba(${trailR},${trailG},${trailB},${trailOpacity}), transparent 35%)`,
+                filter: `blur(${isMobileDevice ? 7 : 5}px) brightness(${1.4 + fireFlicker * 0.6})`,
+                boxShadow: `0 0 ${trailSize * 6 + fireFlicker * 18}px rgba(${trailR},${trailG},${trailB},${trailOpacity}),
+                           0 0 ${trailSize * 12 + fireFlicker * 28}px rgba(${trailR},${trailG},${trailB},${trailOpacity * 0.7}),
+                           0 0 ${trailSize * 18 + fireFlicker * 35}px rgba(${trailR},${trailG},${trailB},${trailOpacity * 0.4})`,
+                opacity: Math.max(isMobileDevice ? 0.75 : 0.6, trailOpacity),
+                pointerEvents: 'none',
+                animation: `spark-float-${i % 2} ${isMobileDevice ? 3 + i * 0.3 : 3.5 + i * 0.5}s ease-in-out infinite`,
+              }}
+            />
+          );
+        })}
+
+        {/* Extra Bright Spark Accents - MOBILE ENHANCED */}
+        {[...Array(isMobileDevice ? 10 : 6)].map((_, i) => {
+          const sparkFlicker = Math.sin(scrollY / 80 + i) * 0.5;
+          const scrollYOffset = scrollY * (isMobileDevice ? 0.1 : 0.12 + i * 0.025);
+          const sparkOpacity = isMobileDevice
+            ? 0.9 + sparkFlicker + scrollProgress * 0.1
+            : 0.8 + sparkFlicker + scrollProgress * 0.15;
+          const sparkSize = isMobileDevice ? 8 : 6;
+
+          const sparkR = 255;
+          const sparkG = Math.floor(160 + scrollProgress * 90 + sparkFlicker * 100);
+          const sparkB = Math.floor(60 + scrollProgress * 100);
+
+          const accentTop = isMobileDevice ? 320 + (i % 5) * 55 : 300 + i * 60;
+
+          return (
+            <div
+              key={`accent-${i}`}
+              style={{
+                position: 'absolute',
+                left: `${8 + (i % 5) * (isMobileDevice ? 18 : 12)}%`,
+                top: `${accentTop + scrollYOffset}px`,
+                width: sparkSize,
+                height: sparkSize,
+                borderRadius: '50%',
+                background: `radial-gradient(circle, rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity}), transparent 25%)`,
+                filter: `blur(${isMobileDevice ? 6 : 4}px) brightness(${1.6 + sparkFlicker * 0.8})`,
+                boxShadow: `0 0 ${sparkSize * 8 + sparkFlicker * 25}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity}),
+                           0 0 ${sparkSize * 16 + sparkFlicker * 40}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity * 0.8}),
+                           0 0 ${sparkSize * 24 + sparkFlicker * 50}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity * 0.5})`,
+                opacity: Math.max(isMobileDevice ? 0.85 : 0.7, sparkOpacity),
+                pointerEvents: 'none',
+                animation: `spark-twinkle-${i % 2} ${isMobileDevice ? 1.8 + i * 0.2 : 2 + i * 0.3}s ease-in-out infinite`,
+              }}
+            />
+          );
+        })}
+
+        <style>{`
+          /* Fire Spark Float Animations - Upward with subtle drift */
+          @keyframes spark-float-0 {
+            0% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-60px) translateX(25px); }
+            100% { transform: translateY(0px) translateX(0px); }
+          }
+
+          @keyframes spark-float-1 {
+            0% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-50px) translateX(-30px); }
+            100% { transform: translateY(0px) translateX(0px); }
+          }
+
+          @keyframes spark-float-2 {
+            0% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-70px) translateX(15px); }
+            100% { transform: translateY(0px) translateX(0px); }
+          }
+
+          /* Twinkling effect for accent sparks */
+          @keyframes spark-twinkle-0 {
+            0%, 100% { transform: scale(1) translateY(-20px); }
+            25% { transform: scale(1.2) translateY(-40px); }
+            50% { transform: scale(0.8) translateY(-60px); }
+            75% { transform: scale(1.1) translateY(-30px); }
+          }
+
+          @keyframes spark-twinkle-1 {
+            0%, 100% { transform: scale(0.9) translateY(-10px); }
+            25% { transform: scale(1.1) translateY(-50px); }
+            50% { transform: scale(0.9) translateY(-70px); }
+            75% { transform: scale(1.15) translateY(-35px); }
+          }
+        `}</style>
+
+        <div
+          style={{
+            position: 'absolute',
+            right: `calc(${isMobileDevice ? 15 : 12}% - ${scrollY * 0.15}px)`,
+            top: `calc(${isMobileDevice ? 8 : 6}% + ${sunY}px)`,
+            width: sunSize,
+            height: sunSize,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(${255 - scrollProgress * 40},${220 - scrollProgress * 50},${160 - scrollProgress * 40},${glowOpacity}), rgba(${255 - scrollProgress * 50},${180 - scrollProgress * 80},120,0) 70%)`,
+            filter: `blur(${isMobileDevice ? 10 : 12}px)`,
+            opacity: sunOpacity,
+            boxShadow: `0 0 ${isMobileDevice ? 60 : 80}px rgba(${255 - scrollProgress * 40},${200 - scrollProgress * 60},120,${glowOpacity * 0.6})`,
+            transition: 'all 0.1s ease-out',
+          }}
         />
-        <path
-          d="M0,560 L160,460 L320,530 L500,420 L680,510 L860,440 L1060,510 L1180,470 L1180,780 L0,780 Z"
-          fill="rgba(10,16,32,0.45)"
+
+        <div
+          style={{
+            position: 'absolute',
+            right: `calc(${isMobileDevice ? 12 : 10}% - ${scrollY * 0.12}px)`,
+            top: `calc(${isMobileDevice ? 10 : 8}% + ${sunY * 0.8}px)`,
+            width: sunInnerSize,
+            height: sunInnerSize,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(255,${240 - scrollProgress * 40},${200 - scrollProgress * 30},${Math.min(glowOpacity * 0.4, 0.3)}), transparent 60%)`,
+            filter: 'blur(20px)',
+            opacity: sunOpacity * 0.5,
+          }}
         />
-        <path
-          d="M0,660 L200,580 L420,630 L640,560 L880,620 L1080,580 L1180,610 L1180,780 L0,780 Z"
-          fill="rgba(10,16,32,0.38)"
-        />
-      </svg>
+
+        <svg
+          viewBox="0 0 1180 780"
+          preserveAspectRatio="none"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: Math.min(0.5, 0.42 + scrollY * 0.0002),
+            pointerEvents: 'none',
+            transform: `translateY(${mountain1Translate}px)`,
+            filter: `drop-shadow(0 0 ${scrollProgress * 30}px rgba(255,${200 - scrollProgress * 100},120,${scrollProgress * 0.4}))`,
+          }}
+        >
+          <path
+            d="M0,460 L120,320 L240,420 L380,260 L520,380 L660,240 L800,360 L940,280 L1080,360 L1180,300 L1180,780 L0,780 Z"
+            fill={`rgba(${10 + scrollProgress * 30},${16 + scrollProgress * 40},${32 + scrollProgress * 50},0.55)`}
+          />
+        </svg>
+
+        <svg
+          viewBox="0 0 1180 780"
+          preserveAspectRatio="none"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: Math.min(0.5, 0.45 + scrollY * 0.0002),
+            pointerEvents: 'none',
+            transform: `translateY(${mountain2Translate}px)`,
+            filter: `drop-shadow(0 0 ${scrollProgress * 25}px rgba(255,${200 - scrollProgress * 80},140,${scrollProgress * 0.3}))`,
+          }}
+        >
+          <path
+            d="M0,560 L160,460 L320,530 L500,420 L680,510 L860,440 L1060,510 L1180,470 L1180,780 L0,780 Z"
+            fill={`rgba(${10 + scrollProgress * 25},${16 + scrollProgress * 35},${32 + scrollProgress * 40},0.45)`}
+          />
+        </svg>
+
+        <svg
+          viewBox="0 0 1180 780"
+          preserveAspectRatio="none"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: Math.min(0.6, 0.38 + scrollY * 0.0003),
+            pointerEvents: 'none',
+            transform: `translateY(${mountain3Translate}px)`,
+            filter: `drop-shadow(0 0 ${scrollProgress * 20}px rgba(255,${200 - scrollProgress * 70},160,${scrollProgress * 0.25}))`,
+          }}
+        >
+          <path
+            d="M0,660 L200,580 L420,630 L640,560 L880,620 L1080,580 L1180,610 L1180,780 L0,780 Z"
+            fill={`rgba(${10 + scrollProgress * 20},${16 + scrollProgress * 30},${32 + scrollProgress * 30},0.38)`}
+          />
+        </svg>
+
+        {[...Array(isMobileDevice ? 6 : 12)].map((_, i) => {
+          const randomLeft = (i * 8.33 + Math.random() * 3) % 100;
+          const randomTop = Math.random() * 50;
+          const randomSize = 1.5 + Math.random() * 2.5;
+          const glowIntensity = 0.3 + Math.random() * 0.6;
+          return (
+            <div
+              key={`star-${i}`}
+              style={{
+                position: 'absolute',
+                width: randomSize,
+                height: randomSize,
+                borderRadius: '50%',
+                background: `rgba(${255 - scrollProgress * 100},${255 - scrollProgress * 80},${220 - scrollProgress * 40},${glowIntensity})`,
+                left: `${randomLeft}%`,
+                top: `${randomTop}%`,
+                opacity: Math.max(0.05, (1 - scrollY * 0.006) * (0.8 + Math.sin(scrollY / 100 + i) * 0.2)),
+                boxShadow: `0 0 ${6 + Math.random() * 10}px rgba(${255 - scrollProgress * 100},${255 - scrollProgress * 80},${220 - scrollProgress * 40},${glowIntensity * 0.8})`,
+                transition: 'opacity 0.2s ease-out',
+                filter: `blur(${0.3 + scrollProgress * 0.3}px)`,
+              }}
+            />
+          );
+        })}
+      </div>
+
       {children}
     </div>
   );
@@ -202,6 +476,8 @@ const MD_ACHIEVEMENTS = [
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -209,6 +485,14 @@ export default function Home() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   if (!mounted) return null;
@@ -221,8 +505,9 @@ export default function Home() {
   const heading3Size = isMobile ? 18 : 22;
 
   return (
-    <MDEnv>
+    <MDEnv scrollY={scrollY} isMobile={isMobile}>
       <div
+        ref={containerRef}
         style={{
           padding: `${padding}px`,
           position: 'relative',
