@@ -51,12 +51,13 @@ function MDEnv({ children, style, scrollY, isMobile }: any) {
 
   const isMobileDevice = isMobile || typeof window !== 'undefined' && window.innerWidth < 768;
 
-  const sunMultiplier = isMobileDevice ? 0.4 : 0.3;
+  const sunMultiplier = isMobileDevice ? 0.35 : 0.25;
   const parallaxMultiplier = isMobileDevice ? 1.2 : 1;
 
-  const sunY = Math.min(scrollY * sunMultiplier, isMobileDevice ? 150 : 120);
-  const sunOpacity = Math.max(0.5, 1 - scrollY * 0.0008);
-  const glowOpacity = Math.max(0.35, 0.85 - scrollY * 0.0006);
+  // Smooth sun movement - linear without limit snap
+  const sunY = scrollY * sunMultiplier;
+  const sunOpacity = Math.max(0.5, 1 - scrollY * 0.0006);
+  const glowOpacity = Math.max(0.35, 0.85 - scrollY * 0.0004);
 
   const sunSize = isMobileDevice ? 140 : 180;
   const sunInnerSize = isMobileDevice ? 90 : 120;
@@ -250,30 +251,33 @@ function MDEnv({ children, style, scrollY, isMobile }: any) {
         <div
           style={{
             position: 'absolute',
-            right: `calc(${isMobileDevice ? 15 : 12}% - ${scrollY * 0.15}px)`,
+            right: `calc(${isMobileDevice ? 15 : 12}% - ${scrollY * 0.12}px)`,
             top: `calc(${isMobileDevice ? 8 : 6}% + ${sunY}px)`,
             width: sunSize,
             height: sunSize,
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(${255 - scrollProgress * 40},${220 - scrollProgress * 50},${160 - scrollProgress * 40},${glowOpacity}), rgba(${255 - scrollProgress * 50},${180 - scrollProgress * 80},120,0) 70%)`,
-            filter: `blur(${isMobileDevice ? 10 : 12}px)`,
+            background: `radial-gradient(circle, rgba(${Math.min(255, 200 + scrollProgress * 30)},${Math.min(220, 180 + scrollProgress * 40)},${160},${glowOpacity}), rgba(${250},${200},${140},0) 70%)`,
+            filter: `blur(${isMobileDevice ? 12 : 14}px)`,
             opacity: sunOpacity,
-            boxShadow: `0 0 ${isMobileDevice ? 60 : 80}px rgba(${255 - scrollProgress * 40},${200 - scrollProgress * 60},120,${glowOpacity * 0.6})`,
-            transition: 'all 0.1s ease-out',
+            boxShadow: `0 0 ${isMobileDevice ? 70 : 90}px rgba(255,${200 + scrollProgress * 20},120,${glowOpacity * 0.8})`,
+            willChange: 'transform',
+            transform: `translateZ(0)`,
           }}
         />
 
         <div
           style={{
             position: 'absolute',
-            right: `calc(${isMobileDevice ? 12 : 10}% - ${scrollY * 0.12}px)`,
-            top: `calc(${isMobileDevice ? 10 : 8}% + ${sunY * 0.8}px)`,
+            right: `calc(${isMobileDevice ? 12 : 10}% - ${scrollY * 0.1}px)`,
+            top: `calc(${isMobileDevice ? 10 : 8}% + ${sunY * 0.7}px)`,
             width: sunInnerSize,
             height: sunInnerSize,
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(255,${240 - scrollProgress * 40},${200 - scrollProgress * 30},${Math.min(glowOpacity * 0.4, 0.3)}), transparent 60%)`,
-            filter: 'blur(20px)',
-            opacity: sunOpacity * 0.5,
+            background: `radial-gradient(circle, rgba(255,${Math.min(255, 240 + scrollProgress * 15)},${210},${glowOpacity * 0.35}), transparent 60%)`,
+            filter: 'blur(18px)',
+            opacity: sunOpacity * 0.6,
+            willChange: 'transform',
+            transform: `translateZ(0)`,
           }}
         />
 
@@ -469,6 +473,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -480,10 +486,34 @@ export default function Home() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      scrollYRef.current = window.scrollY;
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        setScrollY(scrollYRef.current);
+      });
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    const throttledScroll = () => {
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          scrollYRef.current = window.scrollY;
+          setScrollY(window.scrollY);
+          rafRef.current = null;
+        });
+      }
+    };
+
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
   }, []);
 
   if (!mounted) return null;
