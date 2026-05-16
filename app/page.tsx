@@ -79,64 +79,59 @@ function MDEnv({ children, style, scrollY, isMobile }: any) {
       }}
     >
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        {/* Floating Fire-like Light Sparks - MOBILE ENHANCED */}
-        {[...Array(isMobileDevice ? 18 : 12)].map((_, i) => {
-          const baseSize = isMobileDevice ? 12 : 8;
-          const orbSize = baseSize + Math.sin(scrollY / 80 + i) * 3;
+        {/* Floating Fire-like Light Sparks - OPTIMIZED */}
+        {[...Array(isMobileDevice ? 8 : 12)].map((_, i) => {
+          const baseSize = isMobileDevice ? 10 : 8;
+          const orbSize = baseSize + Math.sin(scrollY / 80 + i) * 2;
 
-          // Scroll-based flickering - stronger on mobile
-          const flickerIntensity = 0.4 + Math.sin(scrollY / 80 + i * 0.7) * 0.4;
+          // Scroll-based flickering
+          const flickerIntensity = 0.35 + Math.sin(scrollY / 100 + i * 0.7) * 0.3;
           const scrollReactOpacity = isMobileDevice
-            ? 0.85 + (scrollProgress * 0.15) + flickerIntensity
+            ? 0.8 + (scrollProgress * 0.2) + flickerIntensity * 0.1
             : 0.7 + (scrollProgress * 0.25) + flickerIntensity;
 
-          // Scroll affects vertical position - more visible on mobile
-          const scrollYOffset = scrollY * (isMobileDevice ? 0.08 : 0.1 + i * 0.02);
+          const scrollYOffset = scrollY * (isMobileDevice ? 0.06 : 0.1 + i * 0.02);
 
           let r, g, b;
           if (i % 4 === 0) {
-            // Warm orange/yellow fire
             r = 255;
-            g = Math.floor(140 + scrollProgress * 80 + flickerIntensity * 80);
+            g = Math.floor(140 + scrollProgress * 80);
             b = Math.floor(50 + scrollProgress * 60);
           } else if (i % 4 === 1) {
-            // Hot red/pink
             r = 255;
-            g = Math.floor(100 + scrollProgress * 60 + flickerIntensity * 60);
+            g = Math.floor(100 + scrollProgress * 60);
             b = Math.floor(80 + scrollProgress * 100);
           } else if (i % 4 === 2) {
-            // Cool blue/cyan sparks
             r = Math.floor(150 + scrollProgress * 50);
-            g = Math.floor(200 + scrollProgress * 40 + flickerIntensity * 50);
+            g = Math.floor(200 + scrollProgress * 40);
             b = 255;
           } else {
-            // Bright white core
             r = Math.floor(255 - scrollProgress * 20);
-            g = Math.floor(255 - scrollProgress * 20 + flickerIntensity * 80);
-            b = Math.floor(240 - scrollProgress * 20 + flickerIntensity * 70);
+            g = Math.floor(255 - scrollProgress * 20);
+            b = Math.floor(240 - scrollProgress * 20);
           }
 
-          const animDuration = isMobileDevice ? 3 + (i % 3) * 0.8 : 4 + (i % 3) * 1.5;
-          const delay = i * (isMobileDevice ? 0.08 : 0.15);
-          const topPosition = isMobileDevice ? 140 + (i % 9) * 45 : 120 + i * 60;
+          const animDuration = 4 + (i % 3) * 1.5;
+          const delay = i * 0.15;
+          const topPosition = isMobileDevice ? 140 + i * 55 : 120 + i * 60;
 
           return (
             <div
               key={`spark-${i}`}
               style={{
                 position: 'absolute',
-                left: `${3 + (i % (isMobileDevice ? 9 : 6)) * (isMobileDevice ? 11 : 15)}%`,
-                top: `${topPosition + scrollYOffset + Math.sin(scrollY / 180 + i) * 40}px`,
+                left: `${5 + (i % (isMobileDevice ? 4 : 6)) * (isMobileDevice ? 20 : 15)}%`,
+                top: `${topPosition + scrollYOffset + Math.sin(scrollY / 200 + i) * 30}px`,
                 width: orbSize,
                 height: orbSize,
                 borderRadius: '50%',
-                background: `radial-gradient(circle, rgba(${r},${g},${b},${scrollReactOpacity}), rgba(${r},${g},${b},${scrollReactOpacity * 0.4}), transparent)`,
-                filter: `blur(${isMobileDevice ? 9 : 8}px) brightness(${1.5 + flickerIntensity * 0.5})`,
-                boxShadow: `0 0 ${(orbSize * 5 + flickerIntensity * 20)}px rgba(${r},${g},${b},${scrollReactOpacity * 1}),
-                           0 0 ${(orbSize * 9 + flickerIntensity * 30)}px rgba(${r},${g},${b},${scrollReactOpacity * 0.7}),
-                           0 0 ${(orbSize * 14 + flickerIntensity * 40)}px rgba(${r},${g},${b},${scrollReactOpacity * 0.4})`,
-                opacity: Math.max(isMobileDevice ? 0.8 : 0.6, scrollReactOpacity),
+                background: `radial-gradient(circle, rgba(${r},${g},${b},${scrollReactOpacity}), transparent 60%)`,
+                filter: `blur(${isMobileDevice ? 8 : 8}px)`,
+                boxShadow: `0 0 ${orbSize * 5 + flickerIntensity * 10}px rgba(${r},${g},${b},${scrollReactOpacity * 0.85}),
+                           0 0 ${orbSize * 10 + flickerIntensity * 15}px rgba(${r},${g},${b},${scrollReactOpacity * 0.5})`,
+                opacity: Math.max(isMobileDevice ? 0.75 : 0.6, scrollReactOpacity),
                 pointerEvents: 'none',
+                willChange: 'transform',
                 animation: `spark-float-${i % 3} ${animDuration}s ease-in-out infinite`,
                 animationDelay: `${delay}s`,
               }}
@@ -144,77 +139,73 @@ function MDEnv({ children, style, scrollY, isMobile }: any) {
           );
         })}
 
-        {/* Fire Trail Particles - MOBILE ENHANCED */}
-        {[...Array(isMobileDevice ? 12 : 8)].map((_, i) => {
-          const fireFlicker = Math.sin(scrollY / 100 + i * 0.5) * 0.45;
-          const scrollYOffset = scrollY * (isMobileDevice ? 0.07 : 0.08 + i * 0.015);
-          const trailOpacity = isMobileDevice
-            ? 0.75 + fireFlicker + scrollProgress * 0.2
-            : 0.6 + fireFlicker + scrollProgress * 0.2;
-          const trailSize = isMobileDevice ? 9 : 7;
+        {/* Fire Trail Particles - OPTIMIZED */}
+        {[...Array(isMobileDevice ? 6 : 8)].map((_, i) => {
+          const fireFlicker = Math.sin(scrollY / 120 + i * 0.5) * 0.3;
+          const scrollYOffset = scrollY * (isMobileDevice ? 0.05 : 0.08 + i * 0.015);
+          const trailOpacity = 0.65 + fireFlicker * 0.15 + scrollProgress * 0.15;
+          const trailSize = isMobileDevice ? 7 : 7;
 
           const trailR = Math.floor(255);
-          const trailG = Math.floor(120 + scrollProgress * 100 + fireFlicker * 80);
+          const trailG = Math.floor(120 + scrollProgress * 100);
           const trailB = Math.floor(40 + scrollProgress * 80);
 
-          const trailTop = isMobileDevice ? 240 + (i % 6) * 50 : 200 + i * 40;
+          const trailTop = isMobileDevice ? 250 + i * 65 : 200 + i * 40;
 
           return (
             <div
               key={`trail-${i}`}
               style={{
                 position: 'absolute',
-                left: `${5 + (i % (isMobileDevice ? 6 : 4)) * (isMobileDevice ? 16 : 14)}%`,
-                top: `${trailTop + scrollYOffset + Math.sin(scrollY / 200 + i) * 50}px`,
+                left: `${8 + i * (isMobileDevice ? 18 : 14)}%`,
+                top: `${trailTop + scrollYOffset + Math.sin(scrollY / 250 + i) * 35}px`,
                 width: trailSize,
                 height: trailSize,
                 borderRadius: '50%',
-                background: `radial-gradient(circle, rgba(${trailR},${trailG},${trailB},${trailOpacity}), transparent 35%)`,
-                filter: `blur(${isMobileDevice ? 7 : 5}px) brightness(${1.4 + fireFlicker * 0.6})`,
-                boxShadow: `0 0 ${trailSize * 6 + fireFlicker * 18}px rgba(${trailR},${trailG},${trailB},${trailOpacity}),
-                           0 0 ${trailSize * 12 + fireFlicker * 28}px rgba(${trailR},${trailG},${trailB},${trailOpacity * 0.7}),
-                           0 0 ${trailSize * 18 + fireFlicker * 35}px rgba(${trailR},${trailG},${trailB},${trailOpacity * 0.4})`,
-                opacity: Math.max(isMobileDevice ? 0.75 : 0.6, trailOpacity),
+                background: `radial-gradient(circle, rgba(${trailR},${trailG},${trailB},${trailOpacity}), transparent 50%)`,
+                filter: `blur(${isMobileDevice ? 6 : 5}px)`,
+                boxShadow: `0 0 ${trailSize * 5 + fireFlicker * 8}px rgba(${trailR},${trailG},${trailB},${trailOpacity * 0.9}),
+                           0 0 ${trailSize * 10 + fireFlicker * 12}px rgba(${trailR},${trailG},${trailB},${trailOpacity * 0.5})`,
+                opacity: Math.max(0.6, trailOpacity),
                 pointerEvents: 'none',
-                animation: `spark-float-${i % 2} ${isMobileDevice ? 3 + i * 0.3 : 3.5 + i * 0.5}s ease-in-out infinite`,
+                willChange: 'transform',
+                animation: `spark-float-${i % 2} ${3.5 + i * 0.5}s ease-in-out infinite`,
               }}
             />
           );
         })}
 
-        {/* Extra Bright Spark Accents - MOBILE ENHANCED */}
-        {[...Array(isMobileDevice ? 10 : 6)].map((_, i) => {
-          const sparkFlicker = Math.sin(scrollY / 80 + i) * 0.5;
-          const scrollYOffset = scrollY * (isMobileDevice ? 0.1 : 0.12 + i * 0.025);
-          const sparkOpacity = isMobileDevice
-            ? 0.9 + sparkFlicker + scrollProgress * 0.1
-            : 0.8 + sparkFlicker + scrollProgress * 0.15;
-          const sparkSize = isMobileDevice ? 8 : 6;
+        {/* Extra Bright Spark Accents - OPTIMIZED */}
+        {[...Array(isMobileDevice ? 5 : 6)].map((_, i) => {
+          const sparkFlicker = Math.sin(scrollY / 100 + i) * 0.35;
+          const scrollYOffset = scrollY * (isMobileDevice ? 0.08 : 0.12 + i * 0.025);
+          const sparkOpacity = 0.75 + sparkFlicker * 0.15 + scrollProgress * 0.15;
+          const sparkSize = isMobileDevice ? 7 : 6;
 
           const sparkR = 255;
-          const sparkG = Math.floor(160 + scrollProgress * 90 + sparkFlicker * 100);
+          const sparkG = Math.floor(160 + scrollProgress * 90);
           const sparkB = Math.floor(60 + scrollProgress * 100);
 
-          const accentTop = isMobileDevice ? 320 + (i % 5) * 55 : 300 + i * 60;
+          const accentTop = isMobileDevice ? 340 + i * 70 : 300 + i * 60;
 
           return (
             <div
               key={`accent-${i}`}
               style={{
                 position: 'absolute',
-                left: `${8 + (i % 5) * (isMobileDevice ? 18 : 12)}%`,
+                left: `${15 + i * (isMobileDevice ? 18 : 12)}%`,
                 top: `${accentTop + scrollYOffset}px`,
                 width: sparkSize,
                 height: sparkSize,
                 borderRadius: '50%',
-                background: `radial-gradient(circle, rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity}), transparent 25%)`,
-                filter: `blur(${isMobileDevice ? 6 : 4}px) brightness(${1.6 + sparkFlicker * 0.8})`,
-                boxShadow: `0 0 ${sparkSize * 8 + sparkFlicker * 25}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity}),
-                           0 0 ${sparkSize * 16 + sparkFlicker * 40}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity * 0.8}),
-                           0 0 ${sparkSize * 24 + sparkFlicker * 50}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity * 0.5})`,
-                opacity: Math.max(isMobileDevice ? 0.85 : 0.7, sparkOpacity),
+                background: `radial-gradient(circle, rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity}), transparent 40%)`,
+                filter: `blur(${isMobileDevice ? 5 : 4}px)`,
+                boxShadow: `0 0 ${sparkSize * 6 + sparkFlicker * 12}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity * 0.9}),
+                           0 0 ${sparkSize * 12 + sparkFlicker * 18}px rgba(${sparkR},${sparkG},${sparkB},${sparkOpacity * 0.5})`,
+                opacity: Math.max(0.65, sparkOpacity),
                 pointerEvents: 'none',
-                animation: `spark-twinkle-${i % 2} ${isMobileDevice ? 1.8 + i * 0.2 : 2 + i * 0.3}s ease-in-out infinite`,
+                willChange: 'transform',
+                animation: `spark-twinkle-${i % 2} ${2 + i * 0.3}s ease-in-out infinite`,
               }}
             />
           );
