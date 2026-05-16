@@ -37,7 +37,7 @@ function MDGlass({ children, style, padded = true, interactive = false, isMobile
     : 'none';
 
   const isGrid = style?.display === 'grid';
-  const contentStyle = isGrid ? { position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: style?.gridTemplateColumns, gap: style?.gap, alignItems: style?.alignItems } : { position: 'relative', zIndex: 1 };
+  const contentStyle: any = isGrid ? { position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: style?.gridTemplateColumns, gap: style?.gap, alignItems: style?.alignItems } : { position: 'relative', zIndex: 1 };
 
   return (
     <div
