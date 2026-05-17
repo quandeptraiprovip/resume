@@ -18,72 +18,21 @@ const MD = {
   mono: '"JetBrains Mono",ui-monospace,Menlo,monospace',
 };
 
-function MDGlass({ children, style, padded = true, interactive = false, isMobile = false }: any) {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!interactive || !ref.current || isMobile) return;
-    const rect = ref.current.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
-
-  const gloss = isHovered && interactive && !isMobile
-    ? `radial-gradient(600px 450px at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.12), transparent 70%)`
-    : 'none';
-
-  const isGrid = style?.display === 'grid';
-  const contentStyle: any = isGrid ? { position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: style?.gridTemplateColumns, gap: style?.gap, alignItems: style?.alignItems } : { position: 'relative', zIndex: 1 };
-
+function MDGlass({ children, className = '', style, padded = true, interactive = false, isMobile = false }: any) {
   return (
     <div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => !isMobile && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className={`glass ${interactive ? 'interactive' : ''} ${className}`}
       style={{
-        background: 'rgba(18,22,40,0.48)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid rgba(255,255,255,0.15)',
-        borderRadius: 20,
-        boxShadow: isMobile
-          ? 'inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 32px rgba(0,0,0,0.4)'
-          : isHovered && interactive
-          ? 'inset 0 1px 0 rgba(255,255,255,0.2), 0 20px 60px rgba(0,0,0,0.4), 0 0 32px rgba(255,255,255,0.06)'
-          : 'inset 0 1px 0 rgba(255,255,255,0.12), 0 12px 32px rgba(0,0,0,0.35)',
-        color: MD.ink,
         padding: padded ? 24 : 0,
-        transition: isMobile ? 'none' : 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-        position: 'relative',
-        overflow: 'hidden',
-        ...(isGrid ? { padding: style?.padding } : {}),
-        ...(!isGrid ? style : { display: style?.display }),
+        ...style,
       }}
     >
-      {interactive && !isMobile && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: gloss,
-            pointerEvents: 'none',
-            transition: 'background 0.2s ease-out',
-          }}
-        />
-      )}
-      <div style={contentStyle}>
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
 
-function MDEnv({ children, style, scrollY = 0, isMobile = false }: any) {
+function MDEnv({ children, style, scrollY = 0, isMobile = false, theme = 'sunset' }: any) {
   const scrollProgress = Math.min(scrollY / 800, 1);
 
   const bg = `
@@ -98,6 +47,7 @@ function MDEnv({ children, style, scrollY = 0, isMobile = false }: any) {
 
   return (
     <div
+      data-bg={theme}
       style={{
         width: '100%',
         minHeight: '100vh',
@@ -304,12 +254,9 @@ export default function Home() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? 12 : 0 }}>
-          <MDGlass
-            padded={false}
-            interactive={!isMobile}
-            isMobile={isMobile}
+          <div
+            className="glass thin interactive"
             style={{
-              borderRadius: 16,
               padding: isMobile ? '10px 12px' : '12px 16px',
               display: 'flex',
               flexDirection: 'column',
@@ -341,30 +288,22 @@ export default function Home() {
                 OPEN · MAY '26
               </span>
             </div>
-          </MDGlass>
+          </div>
           {!isMobile && (
-            <MDGlass
-              padded={false}
-              interactive={!isMobile}
-              isMobile={isMobile}
-              style={{ borderRadius: 999, padding: 6, display: 'flex', gap: 2 }}
-            >
+            <div className="glass thin interactive" style={{ padding: 6, display: 'flex', gap: 2 }}>
               {MD_NAV.map((t, i) => (
                 <span
                   key={t}
+                  className="control-chip"
                   style={{
-                    padding: '7px 14px',
-                    borderRadius: 999,
-                    fontSize: 12,
-                    color: MD.ink,
-                    background: i === 0 ? 'rgba(255,255,255,0.18)' : 'transparent',
-                    fontWeight: i === 0 ? 500 : 400,
+                    background: i === 0 ? 'rgba(255,255,255,0.55)' : 'transparent',
+                    color: i === 0 ? '#0f172a' : 'var(--ink-on-glass)',
                   }}
                 >
                   {t}
                 </span>
               ))}
-            </MDGlass>
+            </div>
           )}
         </div>
 
@@ -382,7 +321,7 @@ export default function Home() {
           }
         `}</style>
 
-        <MDGlass interactive={!isMobile} isMobile={isMobile} style={{
+        <div className="glass interactive" style={{
           padding: isMobile ? '20px 16px' : '24px 28px',
           marginTop: isMobile ? 24 : 32,
           display: 'grid',
@@ -481,69 +420,16 @@ export default function Home() {
             width: isMobile ? '100%' : 'auto',
             flexShrink: 0,
           }}>
-            <span
-              style={{
-                background: 'linear-gradient(135deg, #fff 0%, #f5f5f5 100%)',
-                color: '#1a1a2e',
-                padding: isMobile ? '9px 14px' : '8px 18px',
-                borderRadius: 9,
-                fontSize: isMobile ? 11 : 12,
-                fontWeight: 500,
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                boxShadow: '0 6px 16px rgba(255,255,255,0.12)',
-                width: isMobile ? '100%' : '140px',
-              }}
-              onMouseEnter={(e: any) => {
-                if (!isMobile) {
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 12px 28px rgba(255,255,255,0.2)';
-                }
-              }}
-              onMouseLeave={(e: any) => {
-                if (!isMobile) {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(255,255,255,0.12)';
-                }
-              }}
-            >
+            <button className="btn btn-primary" style={{ width: isMobile ? '100%' : '140px' }}>
               ↓ Résumé
-            </span>
-            <span
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                color: MD.ink,
-                padding: isMobile ? '9px 14px' : '8px 18px',
-                borderRadius: 9,
-                fontSize: isMobile ? 11 : 12,
-                border: '1px solid rgba(255,255,255,0.14)',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                width: isMobile ? '100%' : '140px',
-              }}
-              onMouseEnter={(e: any) => {
-                if (!isMobile) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.border = '1px solid rgba(255,255,255,0.22)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }
-              }}
-              onMouseLeave={(e: any) => {
-                if (!isMobile) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                  e.currentTarget.style.border = '1px solid rgba(255,255,255,0.14)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }
-              }}
-            >
+            </button>
+            <button className="btn btn-ghost" style={{ width: isMobile ? '100%' : '140px' }}>
               ✉ Email
-            </span>
+            </button>
           </div>
-        </MDGlass>
+        </div>
 
-        <MDGlass interactive={!isMobile} isMobile={isMobile} style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
+        <div className="glass interactive" style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
           <div
             style={{
               display: 'flex',
@@ -556,16 +442,7 @@ export default function Home() {
             }}
           >
             <div style={{ display: 'flex', gap: isMobile ? 8 : 14, alignItems: 'baseline' }}>
-              <span
-                style={{
-                  fontFamily: MD.mono,
-                  fontSize: isMobile ? 9 : 11,
-                  letterSpacing: '.18em',
-                  color: MD.mute,
-                }}
-              >
-                § 01
-              </span>
+              <span className="eyebrow">§ 01</span>
               <span style={{ fontFamily: MD.serif, fontSize: isMobile ? 18 : 26, letterSpacing: '-0.01em' }}>
                 Skills &amp; stack
               </span>
@@ -590,19 +467,7 @@ export default function Home() {
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {s.items.map((t) => (
-                    <span
-                      key={t}
-                      style={{
-                        background: MD.chipBg,
-                        backdropFilter: 'blur(6px)',
-                        border: MD.chipBd,
-                        padding: '4px 10px',
-                        borderRadius: 999,
-                        fontSize: 11,
-                        color: MD.ink,
-                        fontFamily: MD.mono,
-                      }}
-                    >
+                    <span key={t} className="tag">
                       {t}
                     </span>
                   ))}
@@ -610,9 +475,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </MDGlass>
+        </div>
 
-        <MDGlass interactive={!isMobile} isMobile={isMobile} style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
+        <div className="glass interactive" style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
           <div
             style={{
               display: 'flex',
@@ -625,16 +490,7 @@ export default function Home() {
             }}
           >
             <div style={{ display: 'flex', gap: isMobile ? 8 : 14, alignItems: 'baseline' }}>
-              <span
-                style={{
-                  fontFamily: MD.mono,
-                  fontSize: isMobile ? 9 : 11,
-                  letterSpacing: '.18em',
-                  color: MD.mute,
-                }}
-              >
-                § 02
-              </span>
+              <span className="eyebrow">§ 02</span>
               <span style={{ fontFamily: MD.serif, fontSize: isMobile ? 18 : 26, letterSpacing: '-0.01em' }}>
                 Selected work
               </span>
@@ -722,18 +578,7 @@ export default function Home() {
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignSelf: 'center' }}>
                 {p.stack.map((t) => (
-                  <span
-                    key={t}
-                    style={{
-                      background: MD.chipBg,
-                      border: MD.chipBd,
-                      padding: '3px 9px',
-                      borderRadius: 999,
-                      fontSize: 11,
-                      color: MD.ink,
-                      fontFamily: MD.mono,
-                    }}
-                  >
+                  <span key={t} className="tag">
                     {t}
                   </span>
                 ))}
@@ -757,10 +602,10 @@ export default function Home() {
               </div>
             </div>
           ))}
-        </MDGlass>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.1fr 1fr', gap: 14 }}>
-          <MDGlass interactive={!isMobile} isMobile={isMobile} style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
+          <div className="glass interactive" style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
             <div
               style={{
                 display: 'flex',
@@ -771,16 +616,7 @@ export default function Home() {
               }}
             >
               <div style={{ display: 'flex', gap: isMobile ? 8 : 14, alignItems: 'baseline' }}>
-                <span
-                  style={{
-                    fontFamily: MD.mono,
-                    fontSize: isMobile ? 9 : 11,
-                    letterSpacing: '.18em',
-                    color: MD.mute,
-                  }}
-                >
-                  § 03
-                </span>
+                <span className="eyebrow">§ 03</span>
                 <span style={{ fontFamily: MD.serif, fontSize: isMobile ? 18 : 26, letterSpacing: '-0.01em' }}>
                   Education
                 </span>
@@ -861,9 +697,9 @@ export default function Home() {
                 </ul>
               </div>
             ))}
-          </MDGlass>
+          </div>
 
-          <MDGlass interactive={!isMobile} isMobile={isMobile} style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
+          <div className="glass interactive" style={{ padding: isMobile ? '18px 16px' : '22px 26px' }}>
             <div
               style={{
                 display: 'flex',
@@ -876,16 +712,7 @@ export default function Home() {
               }}
             >
               <div style={{ display: 'flex', gap: isMobile ? 8 : 14, alignItems: 'baseline' }}>
-                <span
-                  style={{
-                    fontFamily: MD.mono,
-                    fontSize: isMobile ? 9 : 11,
-                    letterSpacing: '.18em',
-                    color: MD.mute,
-                  }}
-                >
-                  § 04
-                </span>
+                <span className="eyebrow">§ 04</span>
                 <span style={{ fontFamily: MD.serif, fontSize: isMobile ? 18 : 26, letterSpacing: '-0.01em' }}>
                   Achievements
                 </span>
@@ -904,20 +731,17 @@ export default function Home() {
                   alignItems: 'flex-start',
                 }}
               >
-                <span
-                  style={{
-                    background: MD.chipBg,
-                    border: MD.chipBd,
-                    padding: '3px 0',
-                    borderRadius: 6,
-                    fontSize: 10,
-                    color: MD.cool,
-                    fontFamily: MD.mono,
-                    letterSpacing: '.1em',
-                    textAlign: 'center',
-                    textTransform: 'uppercase',
-                  }}
-                >
+                <span className="badge" style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.28)',
+                  color: 'var(--ink-on-glass)',
+                  fontSize: 10,
+                  fontFamily: MD.mono,
+                  letterSpacing: '.1em',
+                  textTransform: 'uppercase',
+                  padding: '3px 8px',
+                  minWidth: 'auto',
+                }}>
                   {a.kind}
                 </span>
                 <div>
@@ -941,10 +765,10 @@ export default function Home() {
                 </span>
               </div>
             ))}
-          </MDGlass>
+          </div>
         </div>
 
-        <MDGlass interactive={!isMobile} isMobile={isMobile} style={{ padding: isMobile ? '20px 16px' : '30px 32px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: isMobile ? 16 : 24, alignItems: 'center' }}>
+        <div className="glass interactive" style={{ padding: isMobile ? '20px 16px' : '30px 32px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: isMobile ? 16 : 24, alignItems: 'center' }}>
           <div>
             <span style={{ fontFamily: MD.mono, fontSize: isMobile ? 9 : 11, letterSpacing: '.18em', color: MD.mute }}>
               § 05 — Reach
@@ -1011,7 +835,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </MDGlass>
+        </div>
 
         <div
           style={{
