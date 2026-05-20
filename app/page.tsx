@@ -237,6 +237,260 @@ export default function Home() {
     };
   }, []);
 
+  // ── Liquid Glass interactions ──────────────────────────────────
+  useEffect(() => {
+    if (!mounted) return;
+
+    const cleanups: (() => void)[] = [];
+    const isMob = window.innerWidth < 768;
+
+    // ── Stagger reveal — ALL screen sizes ─────────────────────────
+    const rows = document.querySelectorAll<HTMLElement>('[data-stagger-row]');
+    const srIO = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          (en.target as HTMLElement).classList.add('sr-visible');
+          srIO.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.05 });
+    rows.forEach(r => srIO.observe(r));
+    cleanups.push(() => srIO.disconnect());
+
+    // ── Typewriter — ALL screen sizes ─────────────────────────────
+    const roleEl = document.getElementById('role-text');
+    if (roleEl) {
+      const roles = ['Junior Software Engineer', 'Fullstack Developer', 'TypeScript Enthusiast', 'OSS Contributor'];
+      let ri = 0, ci = roles[0].length, del = true;
+      let twTimer: ReturnType<typeof setTimeout>;
+      const tick = () => {
+        const w = roles[ri];
+        if (!del) {
+          ci++; roleEl.textContent = w.slice(0, ci);
+          if (ci >= w.length) { del = true; twTimer = setTimeout(tick, 1400); return; }
+        } else {
+          ci--; roleEl.textContent = w.slice(0, ci);
+          if (ci <= 0) { del = false; ri = (ri + 1) % roles.length; }
+        }
+        twTimer = setTimeout(tick, del ? 52 : 108);
+      };
+      twTimer = setTimeout(tick, 1000);
+      cleanups.push(() => clearTimeout(twTimer));
+    }
+
+    // ── Page-load bubbles — fewer on mobile ───────────────────────
+    const bubColors = ['rgba(255,150,100,0.5)', 'rgba(155,185,255,0.5)', 'rgba(255,205,120,0.5)', 'rgba(175,230,255,0.5)', 'rgba(200,155,255,0.5)'];
+    const bubCount = isMob ? 5 : 10;
+    for (let i = 0; i < bubCount; i++) {
+      const p = document.createElement('div');
+      const sz = 9 + Math.random() * 15;
+      Object.assign(p.style, {
+        position: 'fixed', bottom: '-20px', left: `${10 + Math.random() * 80}%`,
+        width: sz + 'px', height: sz + 'px', borderRadius: '50%',
+        background: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), ${bubColors[i % bubColors.length]})`,
+        border: '1px solid rgba(255,255,255,0.2)',
+        pointerEvents: 'none', zIndex: '50', backdropFilter: 'blur(4px)',
+      });
+      document.body.appendChild(p);
+      const dur = 1800 + Math.random() * 1800, delay = i * 160 + Math.random() * 400;
+      p.animate([
+        { transform: 'translateY(0) scale(0)', opacity: 0 },
+        { transform: `translateY(-${65 + Math.random() * 25}vh) scale(1)`, opacity: 0.65, offset: 0.6 },
+        { transform: `translateY(-${100 + Math.random() * 20}vh) scale(0.15)`, opacity: 0 },
+      ], { duration: dur, delay, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      setTimeout(() => p.remove(), dur + delay + 100);
+    }
+
+    // ── MOBILE interactions ────────────────────────────────────────
+    if (isMob) {
+      // Card entrance: visible cards animate immediately, off-screen via IO
+      document.querySelectorAll<HTMLElement>('.glass').forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+        if (rect.top < window.innerHeight) {
+          card.style.animation = `mc-card-enter .5s cubic-bezier(.4,0,.2,1) ${i * 55}ms both`;
+        } else {
+          const io = new IntersectionObserver(entries => {
+            entries.forEach(en => {
+              if (en.isIntersecting) {
+                (en.target as HTMLElement).style.animation = 'mc-card-enter .5s cubic-bezier(.4,0,.2,1) both';
+                io.unobserve(en.target);
+              }
+            });
+          }, { threshold: 0.08 });
+          io.observe(card);
+          cleanups.push(() => io.disconnect());
+        }
+      });
+
+      // Touch ripple on buttons
+      document.querySelectorAll<HTMLElement>('.btn').forEach(btn => {
+        const touch = (e: TouchEvent) => {
+          const t = e.touches[0];
+          const r = btn.getBoundingClientRect();
+          const span = document.createElement('span');
+          const sz = Math.max(r.width, r.height) * 2.2;
+          Object.assign(span.style, {
+            position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.28)',
+            transform: 'scale(0)', animation: 'ripple-out .72s cubic-bezier(.4,0,.2,1)',
+            width: sz + 'px', height: sz + 'px',
+            left: (t.clientX - r.left - sz / 2) + 'px',
+            top: (t.clientY - r.top - sz / 2) + 'px',
+            pointerEvents: 'none',
+          });
+          btn.appendChild(span);
+          setTimeout(() => span.remove(), 760);
+        };
+        btn.addEventListener('touchstart', touch as EventListener, { passive: true });
+        cleanups.push(() => btn.removeEventListener('touchstart', touch as EventListener));
+      });
+
+      // Press spring — glass cards scale on touch
+      document.querySelectorAll<HTMLElement>('.glass').forEach(card => {
+        const ts = () => {
+          card.style.transition = 'transform .12s cubic-bezier(.3,1.5,.4,1)';
+          card.style.transform = 'scale(0.972)';
+        };
+        const te = () => {
+          card.style.transform = 'scale(1.008)';
+          setTimeout(() => { card.style.transform = 'scale(1)'; }, 150);
+        };
+        card.addEventListener('touchstart', ts, { passive: true });
+        card.addEventListener('touchend', te);
+        card.addEventListener('touchcancel', te);
+        cleanups.push(() => {
+          card.removeEventListener('touchstart', ts);
+          card.removeEventListener('touchend', te);
+          card.removeEventListener('touchcancel', te);
+        });
+      });
+
+      // Skill tag tap scramble
+      const POOL_M = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      document.querySelectorAll<HTMLElement>('.tag[data-text]').forEach(tag => {
+        const orig = tag.dataset.text!;
+        let timer: ReturnType<typeof setInterval>;
+        const scramble = () => {
+          clearInterval(timer);
+          let f = 0;
+          timer = setInterval(() => {
+            const shown = Math.floor(f / 3);
+            tag.textContent = orig.split('').map((c, idx) => idx < shown ? c : POOL_M[Math.floor(Math.random() * POOL_M.length)]).join('');
+            f++;
+            if (f > orig.length * 3) { clearInterval(timer); tag.textContent = orig; }
+          }, 24);
+        };
+        tag.addEventListener('touchstart', scramble, { passive: true });
+        cleanups.push(() => tag.removeEventListener('touchstart', scramble));
+      });
+
+      return () => cleanups.forEach(fn => fn());
+    }
+
+    // ── DESKTOP interactions ───────────────────────────────────────
+
+    // Cursor glow (warm radial that lags behind mouse)
+    const glow = document.createElement('div');
+    Object.assign(glow.style, {
+      position: 'fixed', width: '140px', height: '140px', borderRadius: '50%',
+      pointerEvents: 'none', zIndex: '9', transform: 'translate(-50%,-50%)',
+      background: 'radial-gradient(circle,rgba(255,220,160,0.13) 0%,transparent 70%)',
+      mixBlendMode: 'screen', willChange: 'left,top',
+    });
+    document.body.appendChild(glow);
+    let gtx = -300, gty = -300, gcx = -300, gcy = -300, glowRaf = 0;
+    const onMM = (e: MouseEvent) => { gtx = e.clientX; gty = e.clientY; };
+    document.addEventListener('mousemove', onMM);
+    const glowTick = () => {
+      gcx += (gtx - gcx) * 0.1; gcy += (gty - gcy) * 0.1;
+      glow.style.left = gcx + 'px'; glow.style.top = gcy + 'px';
+      glowRaf = requestAnimationFrame(glowTick);
+    };
+    glowTick();
+    cleanups.push(() => {
+      document.removeEventListener('mousemove', onMM);
+      cancelAnimationFrame(glowRaf);
+      glow.remove();
+    });
+
+    // Tilt 3D + cursor specular on every .glass.interactive card
+    document.querySelectorAll<HTMLElement>('.glass.interactive').forEach(el => {
+      const mm = (e: MouseEvent) => {
+        const r = el.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        el.style.transform = `perspective(900px) translateY(-4px) rotateX(${(.5 - py) * 9}deg) rotateY(${(px - .5) * 9}deg)`;
+        el.style.setProperty('--mx', px * 100 + '%');
+        el.style.setProperty('--my', py * 100 + '%');
+      };
+      const ml = () => { el.style.transform = ''; };
+      el.addEventListener('mousemove', mm as EventListener);
+      el.addEventListener('mouseleave', ml);
+      cleanups.push(() => {
+        el.removeEventListener('mousemove', mm as EventListener);
+        el.removeEventListener('mouseleave', ml);
+      });
+    });
+
+    // Ripple on .btn clicks
+    document.querySelectorAll<HTMLElement>('.btn').forEach(btn => {
+      const click = (e: MouseEvent) => {
+        const r = btn.getBoundingClientRect();
+        const span = document.createElement('span');
+        const sz = Math.max(r.width, r.height) * 2.2;
+        Object.assign(span.style, {
+          position: 'absolute', borderRadius: '50%', background: 'rgba(255,255,255,0.3)',
+          transform: 'scale(0)', animation: 'ripple-out .72s cubic-bezier(.4,0,.2,1)',
+          width: sz + 'px', height: sz + 'px',
+          left: (e.clientX - r.left - sz / 2) + 'px',
+          top: (e.clientY - r.top - sz / 2) + 'px',
+          pointerEvents: 'none',
+        });
+        btn.appendChild(span);
+        setTimeout(() => span.remove(), 760);
+      };
+      btn.addEventListener('click', click as EventListener);
+      cleanups.push(() => btn.removeEventListener('click', click as EventListener));
+    });
+
+    // Magnetic Résumé button
+    const resumeBtn = document.querySelector<HTMLElement>('.btn-primary');
+    if (resumeBtn?.parentElement) {
+      const par = resumeBtn.parentElement;
+      const magMM = (e: MouseEvent) => {
+        const r = resumeBtn.getBoundingClientRect();
+        resumeBtn.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.3}px,${(e.clientY - r.top - r.height / 2) * 0.3}px)`;
+      };
+      const magML = () => { resumeBtn.style.transform = ''; };
+      par.addEventListener('mousemove', magMM as EventListener);
+      par.addEventListener('mouseleave', magML);
+      cleanups.push(() => {
+        par.removeEventListener('mousemove', magMM as EventListener);
+        par.removeEventListener('mouseleave', magML);
+      });
+    }
+
+    // Skill tag text scramble on hover
+    const POOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    document.querySelectorAll<HTMLElement>('.tag[data-text]').forEach(tag => {
+      const orig = tag.dataset.text!;
+      let timer: ReturnType<typeof setInterval>;
+      const enter = () => {
+        clearInterval(timer);
+        let f = 0;
+        timer = setInterval(() => {
+          const shown = Math.floor(f / 3);
+          tag.textContent = orig.split('').map((c, i) => i < shown ? c : POOL[Math.floor(Math.random() * POOL.length)]).join('');
+          f++;
+          if (f > orig.length * 3) { clearInterval(timer); tag.textContent = orig; }
+        }, 24);
+      };
+      tag.addEventListener('mouseenter', enter);
+      cleanups.push(() => tag.removeEventListener('mouseenter', enter));
+    });
+
+    return () => cleanups.forEach(fn => fn());
+  }, [mounted]); // re-run after DOM populates (mounted: false→true)
+
   if (!mounted) return null;
 
   return (
@@ -319,6 +573,32 @@ export default function Home() {
           .avatar-glow {
             animation: float 6s ease-in-out infinite;
           }
+          @keyframes caret-blink { 50% { opacity: 0; } }
+          .tw-caret {
+            display: inline-block; width: 2px; height: .82em;
+            background: rgba(160,200,255,0.85); vertical-align: -1px;
+            animation: caret-blink 1s steps(2) infinite; margin-left: 2px;
+            border-radius: 1px;
+          }
+          [data-stagger-row] {
+            opacity: 0;
+            transform: translateX(-18px);
+            transition: opacity .52s cubic-bezier(.4,0,.2,1), transform .52s cubic-bezier(.4,0,.2,1);
+            transition-delay: calc(var(--sr-i, 0) * 80ms);
+          }
+          [data-stagger-row].sr-visible {
+            opacity: 1 !important;
+            transform: translateX(0) !important;
+          }
+          @keyframes mc-card-enter {
+            from { opacity: 0; transform: translateY(24px); }
+          }
+          @keyframes mc-hero-enter {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+          }
+          @keyframes mc-nav-enter {
+            from { opacity: 0; transform: translateY(-12px); }
+          }
         `}</style>
 
         <div className="glass interactive" style={{
@@ -394,7 +674,8 @@ export default function Home() {
                     fontWeight: 500,
                   }}
                 >
-                  Junior Software Engineer
+                  <span id="role-text">Junior Software Engineer</span>
+                  <span className="tw-caret" />
                 </p>
               </div>
             </div>
@@ -467,7 +748,7 @@ export default function Home() {
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {s.items.map((t) => (
-                    <span key={t} className="tag">
+                    <span key={t} className="tag" data-text={t}>
                       {t}
                     </span>
                   ))}
@@ -502,14 +783,16 @@ export default function Home() {
           {MD_PROJECTS.map((p, i) => (
             <div
               key={p.n}
+              data-stagger-row=""
               style={{
+                '--sr-i': i,
                 display: 'grid',
                 gridTemplateColumns: isMobile ? '1fr' : '88px 1fr 240px 32px',
                 gap: isMobile ? 12 : 20,
                 padding: isMobile ? '12px 0' : '18px 0',
                 borderBottom: i < MD_PROJECTS.length - 1 ? `1px solid ${MD.hairline}` : 'none',
                 alignItems: 'flex-start',
-              }}
+              } as React.CSSProperties}
             >
               <div
                 style={{
@@ -722,14 +1005,16 @@ export default function Home() {
             {MD_ACHIEVEMENTS.map((a, i) => (
               <div
                 key={i}
+                data-stagger-row=""
                 style={{
+                  '--sr-i': i,
                   display: 'grid',
                   gridTemplateColumns: isMobile ? '1fr' : '72px 1fr 48px',
                   gap: isMobile ? 8 : 12,
                   padding: isMobile ? '10px 0' : '14px 0',
                   borderBottom: i < MD_ACHIEVEMENTS.length - 1 ? `1px solid ${MD.hairline}` : 'none',
                   alignItems: 'flex-start',
-                }}
+                } as React.CSSProperties}
               >
                 <span className="badge" style={{
                   background: 'transparent',
